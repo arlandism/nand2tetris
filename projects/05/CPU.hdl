@@ -6,23 +6,23 @@
 /**
  * The Hack CPU (Central Processing unit), consisting of an ALU,
  * two registers named A and D, and a program counter named PC.
- * The CPU is designed to fetch and execute instructions written in 
+ * The CPU is designed to fetch and execute instructions written in
  * the Hack machine language. In particular, functions as follows:
- * Executes the inputted instruction according to the Hack machine 
+ * Executes the inputted instruction according to the Hack machine
  * language specification. The D and A in the language specification
  * refer to CPU-resident registers, while M refers to the external
- * memory location addressed by A, i.e. to Memory[A]. The inM input 
- * holds the value of this location. If the current instruction needs 
- * to write a value to M, the value is placed in outM, the address 
- * of the target location is placed in the addressM output, and the 
- * writeM control bit is asserted. (When writeM==0, any value may 
- * appear in outM). The outM and writeM outputs are combinational: 
- * they are affected instantaneously by the execution of the current 
- * instruction. The addressM and pc outputs are clocked: although they 
- * are affected by the execution of the current instruction, they commit 
- * to their new values only in the next time step. If reset==1 then the 
- * CPU jumps to address 0 (i.e. pc is set to 0 in next time step) rather 
- * than to the address resulting from executing the current instruction. 
+ * memory location addressed by A, i.e. to Memory[A]. The inM input
+ * holds the value of this location. If the current instruction needs
+ * to write a value to M, the value is placed in outM, the address
+ * of the target location is placed in the addressM output, and the
+ * writeM control bit is asserted. (When writeM==0, any value may
+ * appear in outM). The outM and writeM outputs are combinational:
+ * they are affected instantaneously by the execution of the current
+ * instruction. The addressM and pc outputs are clocked: although they
+ * are affected by the execution of the current instruction, they commit
+ * to their new values only in the next time step. If reset==1 then the
+ * CPU jumps to address 0 (i.e. pc is set to 0 in next time step) rather
+ * than to the address resulting from executing the current instruction.
  */
 
 CHIP CPU {
@@ -34,10 +34,47 @@ CHIP CPU {
                          // the current program (reset==0).
 
     OUT outM[16],        // M value output
-        writeM,          // Write to M? 
+        writeM,          // Write to M?
         addressM[15],    // Address in data memory (of M)
         pc[15];          // address of next instruction
 
+    // destination bits in a C instruction
+    // instruction[3]  M[A]
+    // instruction[4]  D
+    // instruction[5]  A
+
     PARTS:
-    // Put your code here:
+    Not(in=instruction[15],out=abitset); // most significant bit is 0
+    And(a=abitset,b=instruction[5],out=adest); // most significant bit is 1 i.e. a C instruction AND A is a destination register in the instruction
+    Or(a=abitset,b=adest,out=loadaregister);
+    Register(in[0..14]=instruction[0..14],in[15]=false,load=loadaregister,out=aregisterout); // A Register
+
+    Mux16(a=aregisterout,b=inM,sel=instruction[12],out=aorm); // should we use M[A] (inM) or A?
+    ALU(zx=instruction[11],nx=instruction[10],zy=instruction[9],
+        ny=instruction[8],f=instruction[7],no=instruction[6],
+        x=dregister,y=aorm,out=aluout,zr=eqzero,ng=lessthanzero);
+
+    Register(in=dregister,load=instruction[4],out=dregisterout); // D Register
+
+    // deriving the jump status from the alu control bits
+    // construct an 8 bit width field where each bit maps
+    // to a jump condition. if any of them are true, then load
+    // the jump instruction into the program counter
+    // eqzero is JEQ
+    // lessthanzero is JLT
+    Not(in=lessthanzero,out=greaterthanzero); // JGT
+    Or(a=greaterthanzero,b=eqzero,out=greateroreq); // JGE
+    Not(in=eqzero,out=noteqzero); // JNE
+    Or(a=lessthanzero,b=eqzero,out=lessoreq); // JLE
+    Equal3Way(a=instruction[0],b=instruction[1],c=instruction[2],out=jmpbitsmatch);// null
+    And(a=false,b=jmpbitsmatch,out=nulljmp); // null
+    And(a=true,b=jmpbitsmatch,out=unconditionaljmp); // JMP
+
+    Or8Way(in[0]=nulljmp,in[1]=greaterthanzero,in[2]=eqzero,
+           in[3]=greateroreq, in[4]=lessthanzero,in[5]=noteqzero,
+           in[6]=lessoreq,in[7]=unconditionaljmp,out=shouldjmp);
+
+    Not(in=shouldjmp,out=inc);
+
+    PC(in=aregisterout,load=shouldjmp,reset=reset,inc=inc,out[0..14]=pc[0..14]);
 }

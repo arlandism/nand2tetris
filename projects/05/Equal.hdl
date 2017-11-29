@@ -1,0 +1,18 @@
+
+CHIP Equal {
+
+  /* truth table
+    0 0 | 1
+    0 1 | 0
+    1 0 | 0
+    1 1 | 1
+  */
+
+  IN a,b;
+  OUT out; // returns out iff the bits are equal
+
+
+  PARTS:
+  Xor(a=a,b=b,out=c);
+  Not(in=c,out=out);
+}

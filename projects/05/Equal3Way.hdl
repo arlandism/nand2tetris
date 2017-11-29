@@ -1,0 +1,21 @@
+
+CHIP Equal3Way {
+
+  /* truth table
+    0 0 0 | 1
+    0 0 1 | 0
+    0 1 0 | 0
+    0 1 1 | 0
+    1 0 0 | 0
+    1 0 1 | 0
+    1 1 0 | 0
+    1 1 1 | 1
+  */
+
+  IN a,b,c;
+  OUT out; // returns out iff the bits are equal
+
+  PARTS:
+  Equal(a=a,b=b,out=tmp);
+  Equal(a=c,b=tmp,out=out);
+}
