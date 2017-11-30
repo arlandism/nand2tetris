@@ -47,34 +47,36 @@ CHIP CPU {
     Not(in=instruction[15],out=abitset); // most significant bit is 0
     And(a=abitset,b=instruction[5],out=adest); // most significant bit is 1 i.e. a C instruction AND A is a destination register in the instruction
     Or(a=abitset,b=adest,out=loadaregister);
-    Register(in[0..14]=instruction[0..14],in[15]=false,load=loadaregister,out=aregisterout); // A Register
+    Mux16(a[0..14]=instruction[0..14],b=aluout,sel=instruction[15],out=aregisterinput);
+    ARegister(in=aregisterinput,load=loadaregister,out=aregisterout,out[0..14]=addressM);
 
     Mux16(a=aregisterout,b=inM,sel=instruction[12],out=aorm); // should we use M[A] (inM) or A?
     ALU(zx=instruction[11],nx=instruction[10],zy=instruction[9],
         ny=instruction[8],f=instruction[7],no=instruction[6],
-        x=dregister,y=aorm,out=aluout,zr=eqzero,ng=lessthanzero);
+        x=dregisterout,y=aorm,out=aluout,out=outM,zr=eqzero,ng=lessthanzero);
 
-    Register(in=dregister,load=instruction[4],out=dregisterout); // D Register
+        // need to figure out how to pass alu output to M
+    DRegister(in=aluout,load=instruction[4],out=dregisterout);
 
-    // deriving the jump status from the alu control bits
-    // construct an 8 bit width field where each bit maps
-    // to a jump condition. if any of them are true, then load
-    // the jump instruction into the program counter
-    // eqzero is JEQ
-    // lessthanzero is JLT
-    Not(in=lessthanzero,out=greaterthanzero); // JGT
-    Or(a=greaterthanzero,b=eqzero,out=greateroreq); // JGE
-    Not(in=eqzero,out=noteqzero); // JNE
-    Or(a=lessthanzero,b=eqzero,out=lessoreq); // JLE
-    Equal3Way(a=instruction[0],b=instruction[1],c=instruction[2],out=jmpbitsmatch);// null
-    And(a=false,b=jmpbitsmatch,out=nulljmp); // null
-    And(a=true,b=jmpbitsmatch,out=unconditionaljmp); // JMP
+    Equal3Way(a=instruction[0],b=instruction[1],c=instruction[2],out=jmpbitsmatch);
+    Equal(a=instruction[0],b=false,out=falsebits);
+    Equal(a=instruction[0],b=true,out=truebits);
+    And(a=falsebits,b=jmpbitsmatch,out=nulljmp); // null
+    And(a=truebits,b=jmpbitsmatch,out=unconditionaljmp); // JMP
 
-    Or8Way(in[0]=nulljmp,in[1]=greaterthanzero,in[2]=eqzero,
-           in[3]=greateroreq, in[4]=lessthanzero,in[5]=noteqzero,
-           in[6]=lessoreq,in[7]=unconditionaljmp,out=shouldjmp);
+    And(a=instruction[2],b=lessthanzero,out=lessthanzerojmp);
+    And(a=instruction[1],b=eqzero,out=eqzerojump);
+    Not(in=lessthanzero,out=greaterthanzero);
+    And(a=instruction[0],b=greaterthanzero,out=greaterthanzerojmp);
+    Or8Way(in[0]=lessthanzerojmp,in[1]=greaterthanzerojmp,in[2]=eqzerojump,
+       in[3]=unconditionaljmp,in[4..7]=false,out=shouldjmpa);
+    Mux(a=shouldjmpa,b=false,sel=nulljmp,out=shouldjmpb);
 
+
+    And(a=instruction[15],b=shouldjmpb,out=shouldjmp);
     Not(in=shouldjmp,out=inc);
+
+    And(a=instruction[3],b=instruction[15],out=writeM);
 
     PC(in=aregisterout,load=shouldjmp,reset=reset,inc=inc,out[0..14]=pc[0..14]);
 }
