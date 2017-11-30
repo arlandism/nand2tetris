@@ -45,7 +45,7 @@ CHIP CPU {
 
     PARTS:
     Not(in=instruction[15],out=abitset); // most significant bit is 0
-    And(a=abitset,b=instruction[5],out=adest); // most significant bit is 1 i.e. a C instruction AND A is a destination register in the instruction
+    And(a=instruction[15],b=instruction[5],out=adest); // most significant bit is 1 i.e. a C instruction AND A is a destination register in the instruction
     Or(a=abitset,b=adest,out=loadaregister);
     Mux16(a[0..14]=instruction[0..14],b=aluout,sel=instruction[15],out=aregisterinput);
     ARegister(in=aregisterinput,load=loadaregister,out=aregisterout,out[0..14]=addressM);
@@ -55,8 +55,8 @@ CHIP CPU {
         ny=instruction[8],f=instruction[7],no=instruction[6],
         x=dregisterout,y=aorm,out=aluout,out=outM,zr=eqzero,ng=lessthanzero);
 
-        // need to figure out how to pass alu output to M
-    DRegister(in=aluout,load=instruction[4],out=dregisterout);
+    And(a=instruction[15],b=instruction[4],out=loaddreg);
+    DRegister(in=aluout,load=loaddreg,out=dregisterout);
 
     Equal3Way(a=instruction[0],b=instruction[1],c=instruction[2],out=jmpbitsmatch);
     Equal(a=instruction[0],b=false,out=falsebits);
@@ -66,7 +66,9 @@ CHIP CPU {
 
     And(a=instruction[2],b=lessthanzero,out=lessthanzerojmp);
     And(a=instruction[1],b=eqzero,out=eqzerojump);
-    Not(in=lessthanzero,out=greaterthanzero);
+    Not(in=lessthanzero,out=notlessthanzero);
+    Not(in=eqzero,out=noteqzero);
+    And(a=notlessthanzero,b=noteqzero,out=greaterthanzero);
     And(a=instruction[0],b=greaterthanzero,out=greaterthanzerojmp);
     Or8Way(in[0]=lessthanzerojmp,in[1]=greaterthanzerojmp,in[2]=eqzerojump,
        in[3]=unconditionaljmp,in[4..7]=false,out=shouldjmpa);
