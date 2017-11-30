@@ -17,5 +17,6 @@ CHIP Equal3Way {
 
   PARTS:
   Equal(a=a,b=b,out=tmp);
-  Equal(a=c,b=tmp,out=out);
+  Equal(a=b,b=c,out=tmp2);
+  And(a=tmp,b=tmp2,out=out);
 }
