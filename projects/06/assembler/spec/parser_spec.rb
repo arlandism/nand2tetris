@@ -57,6 +57,12 @@ describe Parser do
       p.advance
       expect(p.symbol).to eq('LOOP')
     end
+
+    it 'returns the defined label' do
+      p = Parser.new(StringIO.new("(LOOP)\n"))
+      p.advance
+      expect(p.symbol).to eq('LOOP')
+    end
   end
 
   describe '#jump' do
