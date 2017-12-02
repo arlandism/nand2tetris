@@ -1,5 +1,4 @@
 class Parser
-
   attr_reader :stream
   attr_accessor :current_line, :dest, :comp, :jump
   # input_file - open file stream

@@ -1,4 +1,3 @@
-
 # convert integers up to 2^15 into binary
 # to a 15 bit width
 # returns a string of characters
