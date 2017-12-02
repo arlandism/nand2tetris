@@ -1,4 +1,6 @@
 require_relative './parser'
+require_relative './code'
+require_relative './binary'
 
 class Assembler
 
@@ -14,9 +16,9 @@ class Assembler
       parser.advance
       binary = case parser.command_type
                when "A_COMMAND"
-                 "0#{parser.symbol}"
+                 "0#{Binary.convert(parser.symbol)}"
                when "C_COMMAND"
-                 "111#{parser.comp}#{parser.dest}#{parser.jump}"
+                 "111#{Code.comp(parser.comp)}#{Code.dest(parser.dest)}#{Code.jump(parser.jump)}"
                when "L_COMMAND"
                end
 
