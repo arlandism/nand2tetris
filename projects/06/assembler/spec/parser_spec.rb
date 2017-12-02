@@ -22,66 +22,72 @@ describe Parser do
   end
 
   describe '#symbol' do
-    it 'returns the binary equivalent of a number' do
+    it 'returns the number' do
       p = Parser.new(StringIO.new("@100\n"))
       p.advance
-      expect(p.symbol).to eq('0000000001100100')
+      expect(p.symbol).to eq('100')
     end
 
     it 'handles negative numbers' do
       p = Parser.new(StringIO.new("@-1\n"))
       p.advance
-      expect(p.symbol).to eq('1111111111111111')
+      expect(p.symbol).to eq('-1')
+    end
+
+    it 'returns the referenced symbol' do
+      p = Parser.new(StringIO.new("@LOOP\n"))
+      p.advance
+      expect(p.symbol).to eq('LOOP')
     end
   end
 
   describe '#jump' do
-    it 'returns all zeroes for no jump' do
+    it 'returns nothing for no jump' do
       p = Parser.new(StringIO.new("M = D + 1\n"))
       p.advance
-      expect(p.jump).to eq('000')
+      expect(p.jump).to eq('')
     end
 
     it 'returns JGT' do
       p = Parser.new(StringIO.new("M = D + 1;JGT\n"))
       p.advance
-      expect(p.jump).to eq('001')
+      expect(p.jump).to eq('JGT')
     end
 
     it 'returns JEQ' do
       p = Parser.new(StringIO.new("M = D + 1;JEQ\n"))
       p.advance
-      expect(p.jump).to eq('010')
+      expect(p.jump).to eq('JEQ')
     end
 
     it 'returns JGE' do
       p = Parser.new(StringIO.new("M = D + 1;JGE\n"))
       p.advance
-      expect(p.jump).to eq('011')
+      expect(p.jump).to eq('JGE')
     end
 
     it 'returns JLT' do
       p = Parser.new(StringIO.new("M = D + 1;JLT\n"))
       p.advance
-      expect(p.jump).to eq('100')
+      expect(p.jump).to eq('JLT')
     end
 
     it 'returns JNE' do
       p = Parser.new(StringIO.new("M = D + 1;JNE\n"))
       p.advance
-      expect(p.jump).to eq('101')
+      expect(p.jump).to eq('JNE')
     end
 
     it 'returns JLE' do
       p = Parser.new(StringIO.new("M = D + 1;JLE\n"))
       p.advance
-      expect(p.jump).to eq('110')
+      expect(p.jump).to eq('JLE')
     end
 
     it 'returns JMP' do
       p = Parser.new(StringIO.new("M = D + 1;JMP\n"))
       p.advance
-      expect(p.jump).to eq('111')
+      expect(p.jump).to eq('JMP')
     end
   end
 
@@ -89,49 +95,49 @@ describe Parser do
     it 'returns the M destination' do
       p = Parser.new(StringIO.new("M = D + 1\n"))
       p.advance
-      expect(p.dest).to eq('001')
+      expect(p.dest).to eq('M')
     end
 
     it 'returns the A destination' do
       p = Parser.new(StringIO.new("A = D + 1\n"))
       p.advance
-      expect(p.dest).to eq('100')
+      expect(p.dest).to eq('A')
     end
 
     it 'returns the D destination' do
       p = Parser.new(StringIO.new("D = A + 1\n"))
       p.advance
-      expect(p.dest).to eq('010')
+      expect(p.dest).to eq('D')
     end
 
     it 'returns the AD destination' do
-      p = Parser.new(StringIO.new("D = A + 1\n"))
+      p = Parser.new(StringIO.new("AD = A + 1\n"))
       p.advance
-      expect(p.dest).to eq('010')
+      expect(p.dest).to eq('AD')
     end
 
     it 'returns the MD destination' do
-      p = Parser.new(StringIO.new("D = A + 1\n"))
+      p = Parser.new(StringIO.new("MD = A + 1\n"))
       p.advance
-      expect(p.dest).to eq('010')
+      expect(p.dest).to eq('MD')
     end
 
     it 'returns the AM destination' do
-      p = Parser.new(StringIO.new("D = A + 1\n"))
+      p = Parser.new(StringIO.new("AM = A + 1\n"))
       p.advance
-      expect(p.dest).to eq('010')
+      expect(p.dest).to eq('AM')
     end
 
     it 'returns all 3' do
       p = Parser.new(StringIO.new("AMD = D + 1\n"))
       p.advance
-      expect(p.dest).to eq('111')
+      expect(p.dest).to eq('AMD')
     end
 
     it 'returns none' do
       p = Parser.new(StringIO.new("D + 1\n"))
       p.advance
-      expect(p.dest).to eq('000')
+      expect(p.dest).to eq('')
     end
   end
 end
