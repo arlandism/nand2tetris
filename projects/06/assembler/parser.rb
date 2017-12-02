@@ -47,7 +47,7 @@ class Parser
   def symbol
     if command_type == 'A_COMMAND'
       current_line.split('@')[-1]
-    elsif 'L_COMMAND'
+    elsif command_type == 'L_COMMAND'
       current_line.gsub('(','').gsub(')','')
     end
   end
