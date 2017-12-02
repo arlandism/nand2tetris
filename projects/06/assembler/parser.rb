@@ -15,10 +15,14 @@ class Parser
   end
 
   def advance
-    @current_line = stream.readline.gsub(/\n/,'').gsub(/\s/,'')
+    @current_line = stream.readline.gsub(/\/\/.*\n/,'').gsub(/\s/,'')
     @dest = ''
     @comp = ''
     @jump = ''
+    if current_line.empty?
+      advance
+    end
+
     if current_line.include?("=") && current_line.include?(";")
       @dest, rest = current_line.split("=")
       @comp, @jump = rest.split(";")

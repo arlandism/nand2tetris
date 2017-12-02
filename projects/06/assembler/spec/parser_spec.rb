@@ -1,6 +1,24 @@
 require_relative '../parser'
 
 describe Parser do
+  context 'comments' do
+    it 'ignores comments that take the whole line' do
+      p = Parser.new(StringIO.new("//@100abcdef;=\nD=M"))
+      p.advance
+      expect(p.command_type).to eq('C_COMMAND')
+      expect(p.dest).to eq('D')
+      expect(p.comp).to eq('M')
+    end
+
+    it 'ignores comments that occur after valid tokens' do
+      p = Parser.new(StringIO.new("D=M//fooobar;=stuff@\n"))
+      p.advance
+      expect(p.command_type).to eq('C_COMMAND')
+      expect(p.dest).to eq('D')
+      expect(p.comp).to eq('M')
+    end
+  end
+
   describe '#command_type' do
     it "returns A_COMMAND when there's an @ symbol" do
       p = Parser.new(StringIO.new("@100\n"))
